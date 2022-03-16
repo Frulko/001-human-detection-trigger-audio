@@ -1,8 +1,5 @@
 #include <Arduino.h>
-#include <HardwareSerial.h>
 
-
-#include <DFRobotDFPlayerMini.h>
 #include <OneButton.h>
 #include <Player.h>
 #include <HumanDetection.h>
@@ -10,7 +7,8 @@
 
 #define BUTTON_PIN 27
 // int delay_to_stop = 1000 * 1 * 60 * 5;
-int delay_to_stop = 1000 * 5;
+int delay_to_stop = 1000 * 1 * 30;
+int incomingByte = 0;
 
 OneButton btn = OneButton(
   BUTTON_PIN,  // Input pin for the button
@@ -21,13 +19,6 @@ OneButton btn = OneButton(
 auto timer = timer_create_default();
 Player player = Player();
 HumanDetection detector = HumanDetection();
-
-// Handler function for a single click:
-static void handleClick() {
-  Serial.println("Clicked!");
-
-  detector.trigger();
-}
 
 bool stopSound(void *argument /* optional argument given to in/at/every */) {
   player.fadeOut();
@@ -44,28 +35,29 @@ void startSound() {
 
 void setup() {
   Serial.begin(115200);
+  player.init();
+  detector.init();
 
+  btn.attachClick([]() {
+    Serial.println("Clicked!");
+    detector.trigger();
+  });
 
-  btn.attachClick(handleClick);
   btn.attachDoubleClick([]() {
-    // Serial.println("Double Pressed!");
-    // player.fadeOut();
+    player.fadeOut();
   });
 
   btn.attachLongPressStart([]() {
-    // Serial.println("Long press start");
     player.stopFade();
   });
 
   detector.attachDetection([]() {
     Serial.println("Human detected !");
-    startSound();
+    if (!player.isFaded()) {
+      startSound();
+    }
   });
 }
-
-
-
-
 
 void loop() {
   timer.tick();
