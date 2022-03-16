@@ -1,16 +1,37 @@
 #include "Player.h"
 #include <Arduino.h>
+#include <HardwareSerial.h>
 
 Player::Player()
 {
 
 }
 
-void Player::play(){
-  
+void Player::init()
+{
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Fast"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+  Serial2.begin(9600);
+  dfPlayer.begin(Serial2, true);
+  dfPlayer.loop(1);
+  dfPlayer.randomAll();
+  dfPlayer.volume(0);
+
+  if (autoplay) {
+    dfPlayer.play(0);
+  }
 }
 
-void Player::tick(){
+void Player::play()
+{
+  dfPlayer.randomAll();
+  dfPlayer.play(0);
+}
+
+void Player::tick()
+{
   if(!fadeStarted){
     return;
   }
@@ -31,6 +52,8 @@ void Player::tick(){
   
   currentFadeStep = currentFadeStep + (1 * fadeDirection);
 
+  dfPlayer.volume(volume);
+
   Serial.print("volume: ");
   Serial.print(volume);
   Serial.print(" - ");
@@ -39,7 +62,8 @@ void Player::tick(){
   delay(25 * 2);
 }
 
-void Player::fadeIn(){
+void Player::fadeIn()
+{
   if (fadeStarted) {
     return;
   }
@@ -50,7 +74,8 @@ void Player::fadeIn(){
   fadeDirection = 1;
 }
 
-void Player::fadeOut(){
+void Player::fadeOut()
+{
   if (fadeStarted) {
     return;
   }
@@ -61,6 +86,12 @@ void Player::fadeOut(){
   fadeDirection = -1;
 }
 
-void Player::stopFade(){
+void Player::stopFade()
+{
   fadeStarted = false;
+}
+
+bool Player::isFaded()
+{
+  return volume == maxVolume && !fadeStarted;
 }
